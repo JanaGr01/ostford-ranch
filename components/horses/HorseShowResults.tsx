@@ -31,9 +31,32 @@ export default function HorseShowResults({ horseId }: HorseShowResultsProps) {
   const [judge, setJudge] = useState("");
   const [notes, setNotes] = useState("");
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    async function checkSession() {
+      const { data } = await supabase.auth.getSession();
+
+      setIsLoggedIn(Boolean(data.session));
+      setIsAuthLoading(false);
+    }
+
+    checkSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(Boolean(session));
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     async function loadShowResults() {
@@ -61,6 +84,11 @@ export default function HorseShowResults({ horseId }: HorseShowResultsProps) {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!isLoggedIn) {
+      setErrorMessage("You need to sign in to add show results.");
+      return;
+    }
 
     if (!eventName.trim()) {
       setErrorMessage("Please enter an event name.");
@@ -108,7 +136,14 @@ export default function HorseShowResults({ horseId }: HorseShowResultsProps) {
   }
 
   async function handleDelete(resultId: string) {
-    const confirmed = confirm("Are you sure you want to delete this show result?");
+    if (!isLoggedIn) {
+      setErrorMessage("You need to sign in to delete show results.");
+      return;
+    }
+
+    const confirmed = confirm(
+      "Are you sure you want to delete this show result?"
+    );
 
     if (!confirmed) {
       return;
@@ -150,95 +185,105 @@ export default function HorseShowResults({ horseId }: HorseShowResultsProps) {
       <div className="mb-6">
         <h2 className="text-2xl font-semibold">Show Results</h2>
         <p className="mt-2 text-sm text-[#7A6A5A]">
-          Track competitions, placements, scores, judges, and show notes.
+          Competitions, placements, scores, judges, and show notes.
         </p>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="mb-8 rounded-2xl border border-[#E5D6C4] bg-white p-5"
-      >
-        <div className="grid gap-4 md:grid-cols-3">
-          <label className="block md:col-span-2">
-            <span className="mb-2 block text-sm font-semibold">Event Name</span>
-            <input
-              value={eventName}
-              onChange={(event) => setEventName(event.target.value)}
-              className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
-              placeholder="Winter Dressage Cup"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold">Date</span>
-            <input
-              type="date"
-              value={showDate}
-              onChange={(event) => setShowDate(event.target.value)}
-              className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold">Class</span>
-            <input
-              value={showClass}
-              onChange={(event) => setShowClass(event.target.value)}
-              className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
-              placeholder="Intro Dressage"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold">Placement</span>
-            <input
-              value={placement}
-              onChange={(event) => setPlacement(event.target.value)}
-              className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
-              placeholder="2nd Place"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold">Score</span>
-            <input
-              value={score}
-              onChange={(event) => setScore(event.target.value)}
-              className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
-              placeholder="78%"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold">Judge</span>
-            <input
-              value={judge}
-              onChange={(event) => setJudge(event.target.value)}
-              className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
-              placeholder="Judge name"
-            />
-          </label>
-
-          <label className="block md:col-span-3">
-            <span className="mb-2 block text-sm font-semibold">Notes</span>
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              rows={4}
-              className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
-              placeholder="Add show notes, roleplay details, or judging feedback..."
-            />
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="mt-5 rounded-full bg-[#5B3A29] px-5 py-3 text-sm font-semibold text-white hover:bg-[#3f281c] disabled:cursor-not-allowed disabled:opacity-60"
+      {!isAuthLoading && isLoggedIn && (
+        <form
+          onSubmit={handleSubmit}
+          className="mb-8 rounded-2xl border border-[#E5D6C4] bg-white p-5"
         >
-          {isSaving ? "Saving..." : "Add Show Result"}
-        </button>
-      </form>
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className="block md:col-span-2">
+              <span className="mb-2 block text-sm font-semibold">
+                Event Name
+              </span>
+              <input
+                value={eventName}
+                onChange={(event) => setEventName(event.target.value)}
+                className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
+                placeholder="Winter Dressage Cup"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Date</span>
+              <input
+                type="date"
+                value={showDate}
+                onChange={(event) => setShowDate(event.target.value)}
+                className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Class</span>
+              <input
+                value={showClass}
+                onChange={(event) => setShowClass(event.target.value)}
+                className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
+                placeholder="Intro Dressage"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Placement</span>
+              <input
+                value={placement}
+                onChange={(event) => setPlacement(event.target.value)}
+                className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
+                placeholder="2nd Place"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Score</span>
+              <input
+                value={score}
+                onChange={(event) => setScore(event.target.value)}
+                className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
+                placeholder="78%"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Judge</span>
+              <input
+                value={judge}
+                onChange={(event) => setJudge(event.target.value)}
+                className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
+                placeholder="Judge name"
+              />
+            </label>
+
+            <label className="block md:col-span-3">
+              <span className="mb-2 block text-sm font-semibold">Notes</span>
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                rows={4}
+                className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
+                placeholder="Add show notes, roleplay details, or judging feedback..."
+              />
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="mt-5 rounded-full bg-[#5B3A29] px-5 py-3 text-sm font-semibold text-white hover:bg-[#3f281c] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaving ? "Saving..." : "Add Show Result"}
+          </button>
+        </form>
+      )}
+
+      {!isAuthLoading && !isLoggedIn && (
+        <div className="mb-8 rounded-2xl border border-[#E5D6C4] bg-white p-5 text-sm text-[#7A6A5A]">
+          Sign in to add or delete show results.
+        </div>
+      )}
 
       {errorMessage && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -301,13 +346,15 @@ export default function HorseShowResults({ horseId }: HorseShowResultsProps) {
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleDelete(result.id)}
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
-                >
-                  Delete
-                </button>
+                {isLoggedIn && (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(result.id)}
+                    className="rounded-full px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </article>
           ))}

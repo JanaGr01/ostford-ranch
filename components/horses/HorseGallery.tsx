@@ -22,9 +22,32 @@ export default function HorseGallery({ horseId }: HorseGalleryProps) {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    async function checkSession() {
+      const { data } = await supabase.auth.getSession();
+
+      setIsLoggedIn(Boolean(data.session));
+      setIsAuthLoading(false);
+    }
+
+    checkSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(Boolean(session));
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     async function loadGalleryImages() {
@@ -49,6 +72,11 @@ export default function HorseGallery({ horseId }: HorseGalleryProps) {
 
   async function handleUpload(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!isLoggedIn) {
+      setErrorMessage("You need to sign in to add gallery images.");
+      return;
+    }
 
     if (!selectedFile) {
       setErrorMessage("Please choose an image first.");
@@ -107,6 +135,11 @@ export default function HorseGallery({ horseId }: HorseGalleryProps) {
   }
 
   async function handleDelete(image: GalleryImage) {
+    if (!isLoggedIn) {
+      setErrorMessage("You need to sign in to delete gallery images.");
+      return;
+    }
+
     const confirmed = confirm("Are you sure you want to delete this image?");
 
     if (!confirmed) {
@@ -145,48 +178,56 @@ export default function HorseGallery({ horseId }: HorseGalleryProps) {
         <div>
           <h2 className="text-2xl font-semibold">Gallery</h2>
           <p className="mt-2 text-sm text-[#7A6A5A]">
-            Add extra photos for this horse.
+            Extra photos for this horse.
           </p>
         </div>
       </div>
 
-      <form
-        onSubmit={handleUpload}
-        className="mb-8 rounded-2xl border border-[#E5D6C4] bg-white p-5"
-      >
-        <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold">Image</span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={(event) =>
-                setSelectedFile(event.target.files?.[0] || null)
-              }
-              className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
-            />
-          </label>
+      {!isAuthLoading && isLoggedIn && (
+        <form
+          onSubmit={handleUpload}
+          className="mb-8 rounded-2xl border border-[#E5D6C4] bg-white p-5"
+        >
+          <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Image</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(event) =>
+                  setSelectedFile(event.target.files?.[0] || null)
+                }
+                className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
+              />
+            </label>
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold">Caption</span>
-            <input
-              value={caption}
-              onChange={(event) => setCaption(event.target.value)}
-              className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
-              placeholder="Optional caption"
-            />
-          </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Caption</span>
+              <input
+                value={caption}
+                onChange={(event) => setCaption(event.target.value)}
+                className="w-full rounded-xl border border-[#D9C7B2] bg-white px-4 py-3"
+                placeholder="Optional caption"
+              />
+            </label>
 
-          <button
-            type="submit"
-            disabled={isUploading}
-            className="rounded-full bg-[#5B3A29] px-5 py-3 text-sm font-semibold text-white hover:bg-[#3f281c] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isUploading ? "Uploading..." : "Add Image"}
-          </button>
+            <button
+              type="submit"
+              disabled={isUploading}
+              className="rounded-full bg-[#5B3A29] px-5 py-3 text-sm font-semibold text-white hover:bg-[#3f281c] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isUploading ? "Uploading..." : "Add Image"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {!isAuthLoading && !isLoggedIn && (
+        <div className="mb-8 rounded-2xl border border-[#E5D6C4] bg-white p-5 text-sm text-[#7A6A5A]">
+          Sign in to add or delete gallery images.
         </div>
-      </form>
+      )}
 
       {errorMessage && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -216,13 +257,15 @@ export default function HorseGallery({ horseId }: HorseGalleryProps) {
                   <p className="text-sm italic text-[#9A8B7A]">No caption</p>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => handleDelete(image)}
-                  className="mt-4 rounded-full px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
-                >
-                  Delete Image
-                </button>
+                {isLoggedIn && (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(image)}
+                    className="mt-4 rounded-full px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+                  >
+                    Delete Image
+                  </button>
+                )}
               </div>
             </article>
           ))}
