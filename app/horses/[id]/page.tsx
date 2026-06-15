@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import AppHeader from "@/components/layout/AppHeader";
 import DeleteHorseButton from "@/components/horses/DeleteHorseButton";
 import HorseGallery from "@/components/horses/HorseGallery";
+import HorseTimeline from "@/components/horses/HorseTimeline";
 
 type PedigreeHorse = {
   id: string;
@@ -335,6 +336,10 @@ export default async function HorseProfilePage({
           </section>
         </section>
 
+        <div className="mt-8">
+         <HorseTimeline horseId={typedHorse.id} />
+        </div>
+        
         <div className="mt-8">
           <HorseGallery horseId={typedHorse.id} />
         </div>
