@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import AppHeader from "@/components/layout/AppHeader";
+import RequireAuth from "@/components/auth/RequireAuth";
 
 type HorseFormData = {
   name: string;
@@ -235,6 +236,8 @@ export default function EditHorsePage() {
       <section className="mx-auto max-w-4xl">
         <AppHeader />
 
+        <RequireAuth>
+
         <div className="mb-8 border-b border-[#D9C7B2] pb-6">
           <a
             href={`/horses/${horseId}`}
@@ -248,7 +251,7 @@ export default function EditHorsePage() {
             Update this horse record for Ostford Ranch.
           </p>
         </div>
-
+        </RequireAuth>
         <form
           onSubmit={handleSubmit}
           className="space-y-8 rounded-3xl bg-[#FFFAF2] p-8 shadow-sm"

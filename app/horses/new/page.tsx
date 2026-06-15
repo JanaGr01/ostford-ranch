@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import AppHeader from "@/components/layout/AppHeader";
+import RequireAuth from "@/components/auth/RequireAuth";
 
 type PedigreeHorse = {
   id: string;

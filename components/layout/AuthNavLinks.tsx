@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-type DeleteHorseButtonProps = {
-  horseId: string;
-};
-
-export default function DeleteHorseButton({ horseId }: DeleteHorseButtonProps) {
+export default function AuthNavLinks() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -37,18 +33,20 @@ export default function DeleteHorseButton({ horseId }: DeleteHorseButtonProps) {
   }
 
   return (
-    <form action={`/horses/${horseId}/delete`} method="POST">
-      <button
-        type="submit"
-        className="rounded-full bg-red-700 px-5 py-3 text-sm font-semibold text-white hover:bg-red-800"
-        onClick={(event) => {
-          if (!confirm("Are you sure you want to delete this horse?")) {
-            event.preventDefault();
-          }
-        }}
+    <>
+      <a
+        href="/horses/new"
+        className="rounded-full px-4 py-2 text-[#5B3A29] hover:bg-[#FFFAF2]"
       >
-        Delete Horse
-      </button>
-    </form>
+        Add Horse
+      </a>
+
+      <a
+        href="/breeding-planner"
+        className="rounded-full px-4 py-2 text-[#5B3A29] hover:bg-[#FFFAF2]"
+      >
+        Breeding Planner
+      </a>
+    </>
   );
 }
