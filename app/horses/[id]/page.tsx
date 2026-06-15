@@ -3,7 +3,7 @@ import AppHeader from "@/components/layout/AppHeader";
 import DeleteHorseButton from "@/components/horses/DeleteHorseButton";
 import HorseGallery from "@/components/horses/HorseGallery";
 import HorseTimeline from "@/components/horses/HorseTimeline";
-
+import HorseShowResults from "@/components/horses/HorseShowResults";
 type PedigreeHorse = {
   id: string;
   name: string;
@@ -338,6 +338,10 @@ export default async function HorseProfilePage({
 
         <div className="mt-8">
          <HorseTimeline horseId={typedHorse.id} />
+        </div>
+
+        <div className="mt-8">
+          <HorseShowResults horseId={typedHorse.id} />
         </div>
         
         <div className="mt-8">
