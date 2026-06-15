@@ -1,3 +1,5 @@
+import AuthButton from "@/components/auth/AuthButton";
+
 export default function AppHeader() {
   return (
     <header className="mb-10 flex flex-col justify-between gap-4 border-b border-[#D9C7B2] pb-6 md:flex-row md:items-center">
@@ -33,6 +35,8 @@ export default function AppHeader() {
         >
           Breeding Planner
         </a>
+
+        <AuthButton />
       </nav>
     </header>
   );
