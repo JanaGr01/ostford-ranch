@@ -22,8 +22,13 @@ type BreedingPlan = {
   status: string | null;
   notes: string | null;
   created_at: string | null;
-  sire?: HorseOption | null;
-  dam?: HorseOption | null;
+  sire?: HorseOption | HorseOption[] | null;
+  dam?: HorseOption | HorseOption[] | null;
+};
+
+type NormalizedBreedingPlan = Omit<BreedingPlan, "sire" | "dam"> & {
+  sire: HorseOption | null;
+  dam: HorseOption | null;
 };
 
 function formatDate(dateValue: string | null) {
@@ -40,12 +45,25 @@ function formatDate(dateValue: string | null) {
   });
 }
 
-function getHorseDisplayName(horse: HorseOption | null | undefined, fallback: string | null) {
+function getHorseDisplayName(
+  horse: HorseOption | null | undefined,
+  fallback: string | null
+) {
   if (horse) {
     return horse.barn_name ? `${horse.name} "${horse.barn_name}"` : horse.name;
   }
 
   return fallback || "Not set";
+}
+
+function normalizeRelatedHorse(
+  value: HorseOption | HorseOption[] | null | undefined
+): HorseOption | null {
+  if (Array.isArray(value)) {
+    return value[0] || null;
+  }
+
+  return value || null;
 }
 
 async function createBreedingPlan(formData: FormData) {
@@ -125,7 +143,14 @@ export default async function BreedingPlannerPage() {
     .order("created_at", { ascending: false });
 
   const horses = (horsesData || []) as HorseOption[];
-  const plans = (plansData || []) as BreedingPlan[];
+
+  const rawPlans = (plansData || []) as unknown as BreedingPlan[];
+
+  const plans: NormalizedBreedingPlan[] = rawPlans.map((plan) => ({
+    ...plan,
+    sire: normalizeRelatedHorse(plan.sire),
+    dam: normalizeRelatedHorse(plan.dam),
+  }));
 
   const mares = horses.filter((horse) =>
     ["Mare", "Filly"].includes(horse.gender || "")
@@ -172,7 +197,8 @@ export default async function BreedingPlannerPage() {
                     <option key={horse.id} value={horse.id}>
                       {horse.name}
                       {horse.barn_name ? ` "${horse.barn_name}"` : ""} ·{" "}
-                      {horse.gender || "Unknown"} · {horse.breed || "Unknown breed"}
+                      {horse.gender || "Unknown"} ·{" "}
+                      {horse.breed || "Unknown breed"}
                     </option>
                   ))}
                 </select>
@@ -202,7 +228,8 @@ export default async function BreedingPlannerPage() {
                     <option key={horse.id} value={horse.id}>
                       {horse.name}
                       {horse.barn_name ? ` "${horse.barn_name}"` : ""} ·{" "}
-                      {horse.gender || "Unknown"} · {horse.breed || "Unknown breed"}
+                      {horse.gender || "Unknown"} ·{" "}
+                      {horse.breed || "Unknown breed"}
                     </option>
                   ))}
                 </select>
@@ -280,7 +307,8 @@ export default async function BreedingPlannerPage() {
             <div>
               <h2 className="text-2xl font-semibold">Planned Breedings</h2>
               <p className="mt-2 text-sm text-[#7A6A5A]">
-                Showing {plans.length} breeding plan{plans.length === 1 ? "" : "s"}.
+                Showing {plans.length} breeding plan
+                {plans.length === 1 ? "" : "s"}.
               </p>
             </div>
           </div>
@@ -369,7 +397,10 @@ export default async function BreedingPlannerPage() {
                       )}
                     </div>
 
-                    <form action={`/breeding-planner/${plan.id}/delete`} method="POST">
+                    <form
+                      action={`/breeding-planner/${plan.id}/delete`}
+                      method="POST"
+                    >
                       <button
                         type="submit"
                         className="rounded-full px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
