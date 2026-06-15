@@ -4,10 +4,15 @@ import DeleteHorseButton from "@/components/horses/DeleteHorseButton";
 import HorseGallery from "@/components/horses/HorseGallery";
 import HorseTimeline from "@/components/horses/HorseTimeline";
 import HorseShowResults from "@/components/horses/HorseShowResults";
+import HorseFamilyTree from "@/components/horses/HorseFamilyTree";
+
 type PedigreeHorse = {
   id: string;
   name: string;
   barn_name: string | null;
+  gender?: string | null;
+  breed?: string | null;
+  image_url?: string | null;
 };
 
 type OffspringHorse = {
@@ -122,7 +127,7 @@ export default async function HorseProfilePage({
   if (typedHorse.sire_id) {
     const { data } = await supabase
       .from("horses")
-      .select("id, name, barn_name")
+      .select("id, name, barn_name, gender, breed, image_url")
       .eq("id", typedHorse.sire_id)
       .single();
 
@@ -132,7 +137,7 @@ export default async function HorseProfilePage({
   if (typedHorse.dam_id) {
     const { data } = await supabase
       .from("horses")
-      .select("id, name, barn_name")
+      .select("id, name, barn_name, gender, breed, image_url")
       .eq("id", typedHorse.dam_id)
       .single();
 
@@ -337,13 +342,31 @@ export default async function HorseProfilePage({
         </section>
 
         <div className="mt-8">
-         <HorseTimeline horseId={typedHorse.id} />
+          <HorseFamilyTree
+            currentHorse={{
+              id: typedHorse.id,
+              name: typedHorse.name,
+              barn_name: typedHorse.barn_name,
+              gender: typedHorse.gender,
+              breed: typedHorse.breed,
+              image_url: typedHorse.image_url,
+            }}
+            sire={sire}
+            dam={dam}
+            sireName={typedHorse.sire_name}
+            damName={typedHorse.dam_name}
+            offspring={offspring}
+          />
+        </div>
+
+        <div className="mt-8">
+          <HorseTimeline horseId={typedHorse.id} />
         </div>
 
         <div className="mt-8">
           <HorseShowResults horseId={typedHorse.id} />
         </div>
-        
+
         <div className="mt-8">
           <HorseGallery horseId={typedHorse.id} />
         </div>
