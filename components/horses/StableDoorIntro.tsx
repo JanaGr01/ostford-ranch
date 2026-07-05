@@ -11,6 +11,14 @@ export default function StableDoorIntro({ horseName }: StableDoorIntroProps) {
   const [isOpening, setIsOpening] = useState(false);
 
   useEffect(() => {
+    const audio = new Audio("/sounds/horse-neigh.mp3");
+    audio.volume = 0.45;
+
+    audio.play().catch(() => {
+      // Some browsers block autoplay if the page was opened directly.
+      // The animation still works without sound.
+    });
+
     const openTimer = setTimeout(() => {
       setIsOpening(true);
     }, 300);
@@ -22,6 +30,8 @@ export default function StableDoorIntro({ horseName }: StableDoorIntroProps) {
     return () => {
       clearTimeout(openTimer);
       clearTimeout(hideTimer);
+      audio.pause();
+      audio.currentTime = 0;
     };
   }, []);
 
