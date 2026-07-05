@@ -5,6 +5,7 @@ import HorseGallery from "@/components/horses/HorseGallery";
 import HorseTimeline from "@/components/horses/HorseTimeline";
 import HorseShowResults from "@/components/horses/HorseShowResults";
 import HorseFamilyTree from "@/components/horses/HorseFamilyTree";
+import StableDoorIntro from "@/components/horses/StableDoorIntro";
 
 type PedigreeHorse = {
   id: string;
@@ -156,6 +157,7 @@ export default async function HorseProfilePage({
     <main className="min-h-screen bg-[#F6EFE5] px-6 py-8 text-[#2B2118]">
       <section className="mx-auto max-w-6xl">
         <AppHeader />
+        <StableDoorIntro horseName={typedHorse.barn_name || typedHorse.name} />
 
         <section className="overflow-hidden rounded-[2rem] bg-[#FFFAF2] shadow-sm">
           <div className="relative">
