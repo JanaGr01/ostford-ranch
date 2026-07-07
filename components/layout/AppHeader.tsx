@@ -23,6 +23,13 @@ export default function AppHeader() {
           Horses
         </a>
 
+        <a
+          href="/breeding-planner"
+          className="rounded-full px-4 py-2 text-[#5B3A29] hover:bg-[#FFFAF2]"
+        >
+          Breeding Planner
+        </a>
+
         <AuthNavLinks />
 
         <AuthButton />

@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default function AuthNavLinks() {
+type AuthOnlyProps = {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+};
+
+export default function AuthOnly({ children, fallback = null }: AuthOnlyProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,16 +33,13 @@ export default function AuthNavLinks() {
     };
   }, []);
 
-  if (isLoading || !isLoggedIn) {
+  if (isLoading) {
     return null;
   }
 
-  return (
-    <a
-      href="/horses/new"
-      className="rounded-full px-4 py-2 text-[#5B3A29] hover:bg-[#FFFAF2]"
-    >
-      Add Horse
-    </a>
-  );
+  if (!isLoggedIn) {
+    return <>{fallback}</>;
+  }
+
+  return <>{children}</>;
 }
